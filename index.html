@@ -1,0 +1,110 @@
+<title>Hello Hackday</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  /* Layout: one centered column, heading over a sentence and a single button. */
+  :root {
+    --bg: #eef3f1;
+    --surface: #ffffff;
+    --fg: #17302a;
+    --muted: #4b625c;
+    --accent: #1f7a5c;
+    --accent-fg: #ffffff;
+    --font-display: "Fraunces", Georgia, "Times New Roman", serif;
+    --font-body: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #101a17; --surface: #182621; --fg: #e4efeb; --muted: #a3b8b1;
+      --accent: #5fcfa3; --accent-fg: #0c1f18; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #101a17; --surface: #182621; --fg: #e4efeb; --muted: #a3b8b1;
+    --accent: #5fcfa3; --accent-fg: #0c1f18; color-scheme: dark;
+  }
+
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    display: grid;
+    place-items: center;
+    padding-block: 32px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    box-sizing: border-box;
+  }
+  main {
+    width: 100%;
+    max-width: 34rem;
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+  }
+  h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(2.5rem, 9vw, 4rem);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+  }
+  p {
+    margin: 0;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    color: var(--muted);
+    min-height: 3.75em;
+    max-width: 32ch;
+  }
+  button {
+    font: 700 1rem/1 var(--font-body);
+    color: var(--accent-fg);
+    background: var(--accent);
+    border: 0;
+    border-radius: 999px;
+    padding: 0.9rem 1.5rem;
+    cursor: pointer;
+    transition: transform 120ms ease, filter 120ms ease;
+  }
+  button:hover { filter: brightness(1.08); }
+  button:active { transform: scale(0.97); }
+  button:focus-visible { outline: 3px solid var(--fg); outline-offset: 3px; }
+  .fade { animation: fade 240ms ease; }
+  @keyframes fade { from { opacity: 0.2; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .fade { animation: none; }
+    button { transition: none; }
+  }
+</style>
+
+<main>
+  <h1>Hello, world</h1>
+  <p id="line" aria-live="polite">Welcome! It's lovely to have you here.</p>
+  <button id="change" type="button">Say something else</button>
+</main>
+
+<script>
+  const lines = [
+    "Welcome! It's lovely to have you here.",
+    "Hope your day is going wonderfully.",
+    "You're doing great. Keep it up!",
+    "Have you had a glass of water today?",
+    "Every big project starts with a small hello.",
+    "Thanks for stopping by. Come back anytime."
+  ];
+  const line = document.getElementById("line");
+  let i = 0;
+  document.getElementById("change").addEventListener("click", () => {
+    i = (i + 1) % lines.length;
+    line.textContent = lines[i];
+    line.classList.remove("fade");
+    void line.offsetWidth;
+    line.classList.add("fade");
+  });
+</script>
