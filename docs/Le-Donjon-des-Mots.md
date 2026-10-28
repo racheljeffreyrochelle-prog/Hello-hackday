@@ -1,4 +1,4 @@
-# PRD: *Sous la Terre* (working title)
+# PRD: *Le Donjon des Mots*
 
 Status: **agreed** (28 Oct 2026). Next step: one-monster speech test (`game/`).
 
