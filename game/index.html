@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sous la Terre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+  /* A dark dungeon in every theme: black stage, white-bordered dialogue box. */
+  :root {
+    --bg: #000;
+    --fg: #fff;
+    --muted: #b9b9c4;
+    --line: #fff;
+    --accent: #ff9f1c;     /* SPARE / speak button */
+    --accent-fg: #000;
+    --good: #ffd23f;
+    --mood-empty: #333;
+    --font: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #000; } }
+  :root[data-theme="dark"] { --bg: #000; }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font);
+    font-size: 20px; line-height: 1.4;
+    display: flex; justify-content: center;
+    padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
+  }
+  main { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+  [hidden] { display: none !important; }
+
+  .topbar { display: flex; justify-content: space-between; gap: 8px; }
+  .icon-btn {
+    background: none; color: var(--muted); border: 1px solid #555; border-radius: 8px;
+    font: inherit; font-size: 16px; padding: 8px 12px; min-height: 44px; cursor: pointer;
+  }
+
+  h1 { font-size: 34px; margin: 24px 0 4px; text-align: center; letter-spacing: 0.02em; }
+  .sub { text-align: center; color: var(--muted); margin: 0; }
+  .note { color: var(--muted); font-size: 16px; border: 1px dashed #555; border-radius: 8px; padding: 10px 12px; }
+
+  .stage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  #monster { width: 180px; height: 180px; transition: filter 0.6s; }
+  .name { font-weight: 700; color: var(--muted); }
+  .mood { display: flex; gap: 6px; }
+  .mood span { width: 28px; height: 14px; border-radius: 4px; background: var(--mood-empty); transition: background 0.4s; }
+  .mood span.on { background: var(--good); }
+
+  .box {
+    border: 4px solid var(--line); padding: 14px 16px; min-height: 110px;
+  }
+  .box .fr { font-size: 24px; font-weight: 700; margin: 0; }
+  .box .en { color: var(--muted); font-size: 17px; margin: 6px 0 0; }
+
+  .actions { display: flex; flex-direction: column; gap: 10px; }
+  .big {
+    font: inherit; font-size: 24px; font-weight: 700; min-height: 72px; border-radius: 14px;
+    background: var(--accent); color: var(--accent-fg); border: 0; cursor: pointer;
+  }
+  .big:disabled { opacity: 0.5; cursor: default; }
+  .big.listening { background: var(--good); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { transform: scale(0.97); } }
+  .choice {
+    font: inherit; font-size: 20px; min-height: 56px; border-radius: 10px; text-align: left;
+    padding: 8px 14px; background: none; color: var(--fg); border: 2px solid var(--line); cursor: pointer;
+  }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .secondary {
+    font: inherit; font-size: 18px; min-height: 52px; border-radius: 10px;
+    background: none; color: var(--fg); border: 2px solid #777; cursor: pointer;
+  }
+
+  /* Grown-ups panel */
+  dialog { background: #111; color: var(--fg); border: 2px solid #777; border-radius: 12px; width: min(560px, calc(100vw - 32px)); max-height: 85vh; padding: 16px; }
+  dialog::backdrop { background: rgba(0,0,0,0.7); }
+  dialog h2 { margin: 0 0 8px; font-size: 22px; }
+  .stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 17px; margin-bottom: 12px; }
+  .stats b { text-align: right; }
+  .log { list-style: none; padding: 0; margin: 0; font-size: 15px; }
+  .log li { border-top: 1px solid #333; padding: 8px 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
+  .log .heard { color: var(--muted); grid-column: 1 / -1; }
+  .log label { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+  .log input { width: 20px; height: 20px; }
+
+  @media (prefers-reduced-motion: reduce) { .big.listening { animation: none; } }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <button class="icon-btn" id="muteBtn" type="button" aria-pressed="false">♪ Music on</button>
+    <button class="icon-btn" id="parentBtn" type="button">Grown-ups</button>
+  </div>
+
+  <!-- Start: the tap unlocks audio and the microphone prompt. -->
+  <section id="startScreen">
+    <h1>Sous la Terre</h1>
+    <p class="sub">Speech test · Monster 1 of 4</p>
+    <div class="actions" style="margin-top:28px">
+      <button class="big" id="startBtn" type="button">Commencer ▶</button>
+    </div>
+    <p class="note" style="margin-top:20px">
+      <b>Grown-up:</b> the browser will ask to use the microphone. Chrome and Safari send the audio to
+      Google or Apple to turn it into text; this game stores nothing except the text it heard, on this device.
+      <span id="noSpeechNote" hidden><br><b>This browser can't recognise speech</b>, so the game will use tap answers. Try Chrome or Safari.</span>
+    </p>
+  </section>
+
+  <section id="gameScreen" hidden>
+    <div class="stage">
+      <svg id="monster" viewBox="0 0 200 200" aria-hidden="true">
+        <!-- Champi: a lonely mushroom. Mouth curve and colour follow its mood. -->
+        <ellipse cx="100" cy="182" rx="56" ry="9" fill="#222"/>
+        <path d="M70 110 Q66 170 74 178 L126 178 Q134 170 130 110 Z" fill="#efe6d2" stroke="#fff" stroke-width="3"/>
+        <path id="cap" d="M20 112 Q24 30 100 26 Q176 30 180 112 Q100 128 20 112 Z" fill="#c8553d" stroke="#fff" stroke-width="3"/>
+        <circle cx="60" cy="70" r="11" fill="#fff" opacity="0.85"/>
+        <circle cx="132" cy="56" r="8" fill="#fff" opacity="0.85"/>
+        <circle cx="150" cy="90" r="6" fill="#fff" opacity="0.85"/>
+        <circle cx="86" cy="138" r="5" fill="#000"/>
+        <circle cx="114" cy="138" r="5" fill="#000"/>
+        <path id="tear" d="M84 148 q-3 8 0 10 q3 -2 0 -10z" fill="#6cc4ff"/>
+        <path id="mouth" d="M88 162 Q100 152 112 162" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <div class="name">CHAMPI</div>
+      <div class="mood" id="mood" role="img" aria-label="Champi's mood: 0 of 5"></div>
+    </div>
+
+    <div class="box" aria-live="polite">
+      <p class="fr" id="lineFr"></p>
+      <p class="en" id="lineEn"></p>
+    </div>
+
+    <div class="actions" id="speakActions">
+      <button class="big" id="speakBtn" type="button">🎤 Parle !</button>
+      <button class="secondary" id="repeatBtn" type="button">🔁 Répète (hear it again)</button>
+    </div>
+    <div class="actions" id="choiceActions" hidden></div>
+    <div class="actions" id="spareActions" hidden>
+      <button class="big" id="spareBtn" type="button">✦ SPARE</button>
+    </div>
+    <div class="actions" id="endActions" hidden>
+      <button class="big" id="againBtn" type="button">Rejouer ↻</button>
+    </div>
+  </section>
+
+  <dialog id="parentDialog">
+    <h2>For grown-ups</h2>
+    <div class="stats" id="stats"></div>
+    <p style="font-size:15px;color:var(--muted);margin:0 0 8px">
+      Tick <b>“He was right”</b> when the game said wrong but he actually said it well. That tells us whether speech recognition is good enough.
+    </p>
+    <ul class="log" id="log"></ul>
+    <div class="row" style="margin-top:12px">
+      <button class="secondary" id="copyBtn" type="button">Copy results</button>
+      <button class="secondary" id="closeParent" type="button">Close</button>
+    </div>
+  </dialog>
+</main>
+<script src="match.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
