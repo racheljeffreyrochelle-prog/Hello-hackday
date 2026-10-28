@@ -1,6 +1,6 @@
-# Sous la Terre: speech test (Monster 1)
+# Le Donjon des Mots: speech test (Monster 1)
 
-The first build step from [the PRD](../docs/PRD.md). Before building four monsters, this tests the biggest risk: can the browser understand a 10-year-old's French at home, with siblings nearby?
+The first build step from [the PRD](../docs/Le-Donjon-des-Mots.md). Before building four monsters, this tests the biggest risk: can the browser understand a 10-year-old's French at home, with siblings nearby?
 
 **One monster, Champi** (where I live). Champi asks *Où habites-tu ?*, *Tu habites où ?* or *Tu habites dans une ville ou dans un village ?*. Five good answers fill the mood bar, then you **SPARE** Champi.
 

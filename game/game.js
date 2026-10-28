@@ -1,4 +1,4 @@
-// Sous la Terre — speech test with one monster (Champi, "where I live").
+// Le Donjon des Mots — speech test with one monster (Champi, "where I live").
 // Loop: Champi asks aloud -> child speaks -> lenient check -> mood rises.
 // One miss: "Encore ?" and a slow repeat. Two misses: tap choices.
 // Five good answers -> SPARE. Every attempt is logged on this device so a
@@ -32,7 +32,7 @@
   var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
   // ---- Saved data (this device only) ----
-  var KEY = "sous-la-terre-speechtest-v1";
+  var KEY = "le-donjon-des-mots-speechtest-v1";
   function load() {
     try { var d = JSON.parse(localStorage.getItem(KEY)); if (d && d.attempts) return d; } catch (e) {}
     return { attempts: [], spared: 0, stars: 0 };
@@ -320,7 +320,7 @@
   }
 
   $("copyBtn").onclick = function () {
-    var text = "Sous la Terre speech test — " + new Date().toLocaleString() + "\n" +
+    var text = "Le Donjon des Mots speech test — " + new Date().toLocaleString() + "\n" +
       summary().map(function (r) { return r[0] + ": " + r[1]; }).join("\n") + "\n\n" +
       saved.attempts.filter(function (a) { return a.mode === "speech"; }).map(function (a) {
         return (a.ok ? "OK " : (a.misjudged ? "WRONG(misjudged) " : "WRONG ")) + a.q + " -> " + (a.alts || []).join(" | ");
