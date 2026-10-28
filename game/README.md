@@ -2,9 +2,9 @@
 
 The first build step from [the PRD](../docs/Le-Donjon-des-Mots.md). Before building four monsters, this tests the biggest risk: can the browser understand a 10-year-old's French at home, with siblings nearby?
 
-**One monster, Champi** (where I live). Champi asks *Où habites-tu ?*, *Tu habites où ?* or *Tu habites dans une ville ou dans un village ?*. Five good answers fill the mood bar, then you **SPARE** Champi.
+**One monster, Champi** (where I live). Champi asks *Où habites-tu ?*, *Tu habites où ?* or *Tu habites dans une ville ou dans un village ?*. Five good answers fill the mood bar, then you spare Champi with **⭐ ÉPARGNER**.
 
-- Tap 🎤 and speak. The game checks the *J'habite…* pattern, not the town name.
+- Tap **🎤 PARLER** and speak (**🔊 ÉCOUTER** repeats the question; **⚔️ COMBAT** just reminds you we don't fight friends). The game checks the *J'habite…* pattern, not the town name.
 - If it hears nothing, it doesn't count as a miss.
 - After one miss, Champi says "Encore ?" and repeats the question slowly. After two misses, tap choices appear.
 - If he spares Champi using only his voice, he earns a ★. **Rejouer** shuffles the questions.

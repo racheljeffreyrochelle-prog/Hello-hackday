@@ -128,17 +128,46 @@
   }
 
   // ---- Screen helpers ----
-  function line(fr, en) { $("lineFr").textContent = fr; $("lineEn").textContent = en || ""; }
-  function show(which) {
-    ["speakActions", "choiceActions", "spareActions", "endActions"].forEach(function (id) { $(id).hidden = id !== which; });
+  var current = ["", ""];
+  function line(fr, en) {
+    current = [fr, en || ""];
+    $("lineFr").textContent = fr ? "* " + fr : "";
+    $("lineEn").textContent = en || "";
   }
-  function setBusy(on) { $("speakBtn").disabled = on; $("repeatBtn").disabled = on; }
+  // A short aside (COMBAT, or ÉPARGNER too early), then the question comes back.
+  async function aside(fr, en) {
+    var back = current;
+    line(fr, en);
+    await say(fr);
+    await wait(1500);
+    if (current[0] === fr) line(back[0], back[1]);
+  }
+  // Battle phase: speakActions, choiceActions, spareActions, endActions, or null while Champi talks.
+  var phase = null;
+  function show(which) {
+    phase = which;
+    var battle = which === "speakActions" || which === "choiceActions" || which === "spareActions";
+    $("choiceActions").hidden = which !== "choiceActions";
+    $("endActions").hidden = which !== "endActions";
+    $("speakBtn").disabled = which !== "speakActions";
+    $("repeatBtn").disabled = !(which === "speakActions" || which === "choiceActions");
+    $("fightBtn").disabled = !battle;
+    $("spareBtn").disabled = !battle;
+    $("spareBtn").classList.toggle("ready", which === "spareActions");
+    $("foe").classList.toggle("happy", which === "spareActions");
+  }
+  function setBusy(on) {
+    ["speakBtn", "repeatBtn", "fightBtn", "spareBtn"].forEach(function (id) { $(id).disabled = on; });
+  }
+  function shake() {
+    var m = $("monster");
+    m.classList.remove("shake"); void m.getBoundingClientRect(); m.classList.add("shake");
+  }
 
-  var moodEl = $("mood");
-  for (var i = 0; i < MOOD_MAX; i++) moodEl.appendChild(document.createElement("span"));
   function drawMood(n) {
-    Array.prototype.forEach.call(moodEl.children, function (s, i) { s.classList.toggle("on", i < n); });
-    moodEl.setAttribute("aria-label", "Champi's mood: " + n + " of " + MOOD_MAX);
+    $("hearts").textContent = "♥".repeat(n) + "♡".repeat(MOOD_MAX - n);
+    $("hearts").setAttribute("aria-label", "Champi's mood: " + n + " of " + MOOD_MAX);
+    $("monster").classList.remove("spared");
     // Mouth goes from frown (control point above the corners) to smile (below).
     var cy = 152 + (176 - 152) * n / MOOD_MAX;
     $("mouth").setAttribute("d", "M88 162 Q100 " + cy + " 112 162");
@@ -186,11 +215,11 @@
     game.busy = true; setBusy(true);
     var q = game.seq[game.idx], btn = $("speakBtn");
     if (window.speechSynthesis) speechSynthesis.cancel();
-    btn.classList.add("listening"); btn.textContent = "👂 Je t'écoute…";
+    btn.classList.add("listening"); btn.textContent = "👂 J'ÉCOUTE…";
     music.duck(true);
     var r = await listen();
     music.duck(false);
-    btn.classList.remove("listening"); btn.textContent = "🎤 Parle !";
+    btn.classList.remove("listening"); btn.textContent = "🎤 PARLER";
     game.busy = false;
 
     if (r.error) {
@@ -200,12 +229,12 @@
         line("Hmm…", "The microphone isn't available, so tap your answer instead (and say it out loud too!).");
         showChoices(); return;
       }
-      line(q.fr, "Oops, the speech checker didn't work that time. Tap 🎤 and try again.");
+      line(q.fr, "Oops, the speech checker didn't work that time. Tap 🎤 PARLER and try again.");
       setBusy(false); return;
     }
     if (!r.alts.length) {
       record({ q: q.fr, mode: "silence" });
-      line(q.fr, "I didn't hear anything. Tap 🎤, then speak nice and clearly.");
+      line(q.fr, "I didn't hear anything. Tap 🎤 PARLER, then speak nice and clearly.");
       setBusy(false); return;
     }
 
@@ -214,6 +243,7 @@
     if (result.ok) return correct();
 
     game.misses++;
+    shake();
     line("Encore ?", "Say it again? Listen carefully…");
     await say("Encore ?");
     await wait(300);
@@ -233,8 +263,8 @@
         record({ q: q.fr, mode: "tap", ok: c.ok, heard: c.fr });
         await say(c.fr);
         game.busy = false;
-        if (c.ok) { game.usedTap = true; return correct(); }
-        b.disabled = true;
+        if (c.ok) { b.classList.add("right"); game.usedTap = true; await wait(400); return correct(); }
+        b.disabled = true; b.classList.add("wrong"); shake();
         line("Hmm, non…", "Not quite. Try another one!");
       };
       box.appendChild(b);
@@ -250,14 +280,17 @@
     line(cheer[0], cheer[1]);
     await say(cheer[0]);
     if (game.mood < MOOD_MAX) { game.idx++; await wait(500); return ask(); }
-    line("Je suis content !", "Champi is happy now! You can SPARE Champi.");
+    line("Je suis content !", "Champi is happy now! Tap ⭐ ÉPARGNER to spare Champi.");
     await say("Je suis content !");
     show("spareActions");
   }
 
   async function onSpare() {
+    if (phase !== "spareActions") return aside("Champi est encore triste…", "Champi is still sad. Keep answering!");
     var star = !game.usedTap;
     saved.spared++; if (star) saved.stars++; persist();
+    $("starCount").textContent = saved.stars;
+    $("monster").classList.add("spared");
     show(null);
     line("Merci ! Au revoir !", star
       ? "★ You spared Champi using only your voice — you earned a star! (Stars: " + saved.stars + ")"
@@ -326,7 +359,7 @@
         return (a.ok ? "OK " : (a.misjudged ? "WRONG(misjudged) " : "WRONG ")) + a.q + " -> " + (a.alts || []).join(" | ");
       }).join("\n");
     navigator.clipboard.writeText(text).then(
-      function () { $("copyBtn").textContent = "Copied ✓"; setTimeout(function () { $("copyBtn").textContent = "Copy results"; }, 1500); },
+      function () { $("copyBtn").textContent = "COPIED ✓"; setTimeout(function () { $("copyBtn").textContent = "COPY RESULTS"; }, 1500); },
       function () { prompt("Copy these results:", text); });
   };
   $("parentBtn").onclick = function () { renderParent(); $("parentDialog").showModal(); };
@@ -336,7 +369,8 @@
   if (!SR) $("noSpeechNote").hidden = false;
   $("startBtn").onclick = function () {
     music.start(); pickVoice();
-    $("startScreen").hidden = true; $("gameScreen").hidden = false;
+    $("startScreen").hidden = true; $("arena").hidden = false; $("menu").hidden = false;
+    $("room").textContent = "LA GROTTE";
     startEncounter();
   };
   $("speakBtn").onclick = onSpeak;
@@ -345,10 +379,14 @@
     setBusy(true); await say(game.seq[game.idx].fr, true); setBusy(false);
   };
   $("spareBtn").onclick = onSpare;
+  $("fightBtn").onclick = function () {
+    aside("Tu lèves ton bâton… mais non !", "No fighting with friends! Answer Champi's question instead.");
+  };
+  $("starCount").textContent = saved.stars;
   $("againBtn").onclick = startEncounter;
   $("muteBtn").onclick = function () {
     var m = music.toggleMute();
-    $("muteBtn").textContent = m ? "♪ Music off" : "♪ Music on";
+    $("muteBtn").textContent = m ? "♪ MUSIQUE OFF" : "♪ MUSIQUE ON";
     $("muteBtn").setAttribute("aria-pressed", String(m));
   };
 })();

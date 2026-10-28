@@ -6,163 +6,215 @@
 <title>Le Donjon des Mots</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
 <style>
-  /* A dark dungeon in every theme: black stage, white-bordered dialogue box. */
+  /* Retro arcade look: black screen, white frame, orange menu, cyan help, yellow mercy. */
   :root {
-    --bg: #000;
-    --fg: #fff;
-    --muted: #b9b9c4;
-    --line: #fff;
-    --accent: #ff9f1c;     /* SPARE / speak button */
-    --accent-fg: #000;
-    --good: #ffd23f;
-    --mood-empty: #333;
-    --font: "Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", sans-serif;
     color-scheme: dark;
+    --bg: #111;
+    --screen: #000;
+    --arena: #050505;
+    --fg: #fff;
+    --menu: #ff9900;
+    --help: #0ff;
+    --stat: #ff0;
+    --good: #0f0;
+    --bad: #ff5a5a;
+    --heart: #ff4d8d;
+    --dim: #444;
+    --pixel: "Press Start 2P", "Courier New", monospace;
+    --plain: system-ui, -apple-system, "Segoe UI", sans-serif;
   }
-  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #000; } }
-  :root[data-theme="dark"] { --bg: #000; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #111; } }
+  :root[data-theme="dark"] { --bg: #111; }
 
-  * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font);
-    font-size: 20px; line-height: 1.4;
-    display: flex; justify-content: center;
-    padding: max(12px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom));
-  }
-  main { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   [hidden] { display: none !important; }
 
-  .topbar { display: flex; justify-content: space-between; gap: 8px; }
-  .icon-btn {
-    background: none; color: var(--muted); border: 1px solid #555; border-radius: 8px;
-    font: inherit; font-size: 16px; padding: 8px 12px; min-height: 44px; cursor: pointer;
+  body {
+    background: var(--bg); color: var(--fg); font-family: var(--pixel); font-size: 13px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    min-height: 100vh; min-height: 100dvh;
+    padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+             max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  }
+  button { font-family: var(--pixel); cursor: pointer; }
+  button:focus-visible { outline: 3px solid var(--help); outline-offset: 2px; }
+
+  /* Small controls above the frame */
+  .toolbar { width: 100%; max-width: 640px; display: flex; justify-content: space-between; gap: 8px; }
+  .tool {
+    background: none; color: #888; border: 2px solid #333; font-size: 8px;
+    padding: 10px 10px; min-height: 40px;
+  }
+  .tool:hover { color: var(--fg); border-color: var(--fg); }
+
+  .game {
+    width: 100%; max-width: 640px; border: 4px solid var(--fg); background: var(--screen);
+    display: flex; flex-direction: column; gap: 16px; padding: 20px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
   }
 
-  h1 { font-size: 34px; margin: 24px 0 4px; text-align: center; letter-spacing: 0.02em; }
-  .sub { text-align: center; color: var(--muted); margin: 0; }
-  .note { color: var(--muted); font-size: 16px; border: 1px dashed #555; border-radius: 8px; padding: 10px 12px; }
-
-  .stage { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-  #monster { width: 180px; height: 180px; transition: filter 0.6s; }
-  .name { font-weight: 700; color: var(--muted); }
-  .mood { display: flex; gap: 6px; }
-  .mood span { width: 28px; height: 14px; border-radius: 4px; background: var(--mood-empty); transition: background 0.4s; }
-  .mood span.on { background: var(--good); }
-
-  .box {
-    border: 4px solid var(--line); padding: 14px 16px; min-height: 110px;
+  .stats {
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px;
+    font-size: 10px; color: var(--stat); border-bottom: 2px dashed #333; padding-bottom: 10px;
   }
-  .box .fr { font-size: 24px; font-weight: 700; margin: 0; }
-  .box .en { color: var(--muted); font-size: 17px; margin: 6px 0 0; }
 
-  .actions { display: flex; flex-direction: column; gap: 10px; }
-  .big {
-    font: inherit; font-size: 24px; font-weight: 700; min-height: 72px; border-radius: 14px;
-    background: var(--accent); color: var(--accent-fg); border: 0; cursor: pointer;
+  .arena {
+    border: 4px solid var(--fg); background: var(--arena);
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: 20px 16px; min-height: 360px;
   }
-  .big:disabled { opacity: 0.5; cursor: default; }
-  .big.listening { background: var(--good); animation: pulse 1s infinite; }
-  @keyframes pulse { 50% { transform: scale(0.97); } }
+
+  .foe { width: 100%; display: flex; justify-content: space-between; gap: 8px; font-size: 10px; }
+  .foe { align-items: center; }
+  .foe .hearts { color: var(--heart); letter-spacing: 2px; font-family: var(--plain); font-size: 20px; }
+  .foe.happy .name { color: var(--stat); }
+
+  #monster { width: 120px; height: 120px; animation: float 2s infinite ease-in-out; transition: opacity 0.8s, filter 0.6s; }
+  #monster.shake { animation: shake 0.3s 2; }
+  #monster.spared { opacity: 0.45; animation: none; }
+  @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .dialogue { width: 100%; font-size: 14px; line-height: 1.9; min-height: 54px; }
+  .hint { width: 100%; font-size: 10px; line-height: 1.8; color: var(--help); min-height: 18px; }
+
+  .choices { width: 100%; display: grid; grid-template-columns: 1fr; gap: 12px; }
   .choice {
-    font: inherit; font-size: 20px; min-height: 56px; border-radius: 10px; text-align: left;
-    padding: 8px 14px; background: none; color: var(--fg); border: 2px solid var(--line); cursor: pointer;
+    background: var(--screen); border: 3px solid var(--fg); color: var(--fg);
+    padding: 14px 12px; font-size: 11px; line-height: 1.6; text-align: left; transition: 0.1s;
   }
-  .row { display: flex; gap: 10px; }
-  .row > * { flex: 1; }
-  .secondary {
-    font: inherit; font-size: 18px; min-height: 52px; border-radius: 10px;
-    background: none; color: var(--fg); border: 2px solid #777; cursor: pointer;
-  }
+  .choice:hover:not(:disabled) { background: var(--menu); color: #000; border-color: var(--menu); }
+  .choice.wrong { border-color: var(--bad); color: var(--bad); cursor: default; }
+  .choice.right { background: var(--good); color: #000; border-color: var(--good); }
 
-  /* Grown-ups panel */
-  dialog { background: #111; color: var(--fg); border: 2px solid #777; border-radius: 12px; width: min(560px, calc(100vw - 32px)); max-height: 85vh; padding: 16px; }
-  dialog::backdrop { background: rgba(0,0,0,0.7); }
-  dialog h2 { margin: 0 0 8px; font-size: 22px; }
-  .stats { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 17px; margin-bottom: 12px; }
-  .stats b { text-align: right; }
-  .log { list-style: none; padding: 0; margin: 0; font-size: 15px; }
+  .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+  .next {
+    background: var(--fg); color: #000; border: 0; font-size: 12px; padding: 14px 18px;
+    animation: blink 1.2s infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+  .menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .menu button {
+    background: var(--screen); border: 4px solid var(--menu); color: var(--menu);
+    font-size: 10px; line-height: 1.6; padding: 16px 4px;
+  }
+  .menu button:hover:not(:disabled) { background: var(--menu); color: #000; }
+  .menu button:active:not(:disabled) { transform: scale(0.95); }
+  .menu button:disabled { border-color: var(--dim); color: var(--dim); cursor: not-allowed; }
+  .menu button.ready, .menu button.listening { border-color: var(--stat); color: var(--stat); animation: blink 0.8s infinite; }
+  .menu button.ready:hover { background: var(--stat); color: #000; }
+
+  /* Start screen */
+  .title { text-align: center; font-size: 22px; line-height: 1.6; margin-top: 12px; }
+  .sub { text-align: center; color: var(--stat); font-size: 10px; }
+  .note { font-family: var(--plain); font-size: 14px; line-height: 1.5; color: #aaa; border: 2px dashed #333; padding: 12px; }
+
+  /* Grown-ups panel: plain text, it's for reading */
+  dialog { background: #111; color: var(--fg); border: 4px solid var(--fg); width: min(560px, calc(100vw - 32px)); max-height: 85vh; padding: 16px; font-family: var(--plain); margin: auto; }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.8); }
+  dialog h2 { font-family: var(--pixel); font-weight: normal; font-size: 14px; color: var(--stat); margin: 0 0 14px; }
+  .pstats { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; font-size: 16px; margin-bottom: 12px; }
+  .pstats b { text-align: right; }
+  .log { list-style: none; font-size: 15px; }
   .log li { border-top: 1px solid #333; padding: 8px 0; display: grid; grid-template-columns: 1fr auto; gap: 4px 10px; align-items: center; }
-  .log .heard { color: var(--muted); grid-column: 1 / -1; }
-  .log label { font-size: 14px; color: var(--muted); display: flex; gap: 6px; align-items: center; }
+  .log .heard { color: #aaa; grid-column: 1 / -1; }
+  .log label { font-size: 14px; color: var(--help); display: flex; gap: 6px; align-items: center; }
   .log input { width: 20px; height: 20px; }
+  .pbtn { background: var(--screen); border: 3px solid var(--fg); color: var(--fg); font-size: 10px; padding: 14px 8px; flex: 1; }
+  .pbtn:hover { background: var(--fg); color: #000; }
 
-  @media (prefers-reduced-motion: reduce) { .big.listening { animation: none; } }
+  @media (max-width: 600px) {
+    .game { padding: 12px; border-width: 3px; gap: 12px; }
+    .stats, .foe { font-size: 8px; }
+    .arena { padding: 16px 10px; border-width: 3px; min-height: 320px; }
+    .dialogue { font-size: 12px; }
+    .hint { font-size: 9px; }
+    .choice { font-size: 10px; }
+    .title { font-size: 17px; }
+    .menu { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .menu button { font-size: 9px; padding: 14px 4px; border-width: 3px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #monster, #monster.shake, .next, .menu button.ready, .menu button.listening { animation: none; }
+  }
 </style>
 </head>
 <body>
-<main>
-  <div class="topbar">
-    <button class="icon-btn" id="muteBtn" type="button" aria-pressed="false">♪ Music on</button>
-    <button class="icon-btn" id="parentBtn" type="button">Grown-ups</button>
+<div class="toolbar">
+  <button class="tool" id="muteBtn" type="button" aria-pressed="false">♪ MUSIQUE ON</button>
+  <button class="tool" id="parentBtn" type="button">GROWN-UPS</button>
+</div>
+
+<main class="game">
+  <div class="stats">
+    <span id="room">LE DONJON</span>
+    <span>MONSTRE 1/4</span>
+    <span>★ <span id="starCount">0</span></span>
   </div>
 
   <!-- Start: the tap unlocks audio and the microphone prompt. -->
-  <section id="startScreen">
-    <h1>Le Donjon des Mots</h1>
-    <p class="sub">Speech test · Monster 1 of 4</p>
-    <div class="actions" style="margin-top:28px">
-      <button class="big" id="startBtn" type="button">Commencer ▶</button>
-    </div>
-    <p class="note" style="margin-top:20px">
+  <section class="arena" id="startScreen">
+    <p class="title">Le Donjon<br>des Mots</p>
+    <p class="sub">* SPEECH TEST *</p>
+    <div class="row"><button class="next" id="startBtn" type="button">COMMENCER ▶</button></div>
+    <p class="note">
       <b>Grown-up:</b> the browser will ask to use the microphone. Chrome and Safari send the audio to
       Google or Apple to turn it into text; this game stores nothing except the text it heard, on this device.
       <span id="noSpeechNote" hidden><br><b>This browser can't recognise speech</b>, so the game will use tap answers. Try Chrome or Safari.</span>
     </p>
   </section>
 
-  <section id="gameScreen" hidden>
-    <div class="stage">
-      <svg id="monster" viewBox="0 0 200 200" aria-hidden="true">
-        <!-- Champi: a lonely mushroom. Mouth curve and colour follow its mood. -->
-        <ellipse cx="100" cy="182" rx="56" ry="9" fill="#222"/>
-        <path d="M70 110 Q66 170 74 178 L126 178 Q134 170 130 110 Z" fill="#efe6d2" stroke="#fff" stroke-width="3"/>
-        <path id="cap" d="M20 112 Q24 30 100 26 Q176 30 180 112 Q100 128 20 112 Z" fill="#c8553d" stroke="#fff" stroke-width="3"/>
-        <circle cx="60" cy="70" r="11" fill="#fff" opacity="0.85"/>
-        <circle cx="132" cy="56" r="8" fill="#fff" opacity="0.85"/>
-        <circle cx="150" cy="90" r="6" fill="#fff" opacity="0.85"/>
-        <circle cx="86" cy="138" r="5" fill="#000"/>
-        <circle cx="114" cy="138" r="5" fill="#000"/>
-        <path id="tear" d="M84 148 q-3 8 0 10 q3 -2 0 -10z" fill="#6cc4ff"/>
-        <path id="mouth" d="M88 162 Q100 152 112 162" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>
-      </svg>
-      <div class="name">CHAMPI</div>
-      <div class="mood" id="mood" role="img" aria-label="Champi's mood: 0 of 5"></div>
+  <section class="arena" id="arena" hidden>
+    <div class="foe" id="foe">
+      <span class="name">CHAMPI</span>
+      <span class="hearts" id="hearts" role="img" aria-label="Champi's mood: 0 of 5"></span>
     </div>
-
-    <div class="box" aria-live="polite">
-      <p class="fr" id="lineFr"></p>
-      <p class="en" id="lineEn"></p>
+    <svg id="monster" viewBox="0 0 200 200" aria-hidden="true">
+      <!-- Champi: a lonely mushroom. Mouth curve and colour follow its mood. -->
+      <ellipse cx="100" cy="182" rx="56" ry="9" fill="#222"/>
+      <path d="M70 110 Q66 170 74 178 L126 178 Q134 170 130 110 Z" fill="#efe6d2" stroke="#fff" stroke-width="3"/>
+      <path d="M20 112 Q24 30 100 26 Q176 30 180 112 Q100 128 20 112 Z" fill="#c8553d" stroke="#fff" stroke-width="3"/>
+      <circle cx="60" cy="70" r="11" fill="#fff" opacity="0.85"/>
+      <circle cx="132" cy="56" r="8" fill="#fff" opacity="0.85"/>
+      <circle cx="150" cy="90" r="6" fill="#fff" opacity="0.85"/>
+      <circle cx="86" cy="138" r="5" fill="#000"/>
+      <circle cx="114" cy="138" r="5" fill="#000"/>
+      <path id="tear" d="M84 148 q-3 8 0 10 q3 -2 0 -10z" fill="#6cc4ff"/>
+      <path id="mouth" d="M88 162 Q100 152 112 162" fill="none" stroke="#000" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <div aria-live="polite" style="width:100%">
+      <p class="dialogue" id="lineFr"></p>
+      <p class="hint" id="lineEn"></p>
     </div>
-
-    <div class="actions" id="speakActions">
-      <button class="big" id="speakBtn" type="button">🎤 Parle !</button>
-      <button class="secondary" id="repeatBtn" type="button">🔁 Répète (hear it again)</button>
-    </div>
-    <div class="actions" id="choiceActions" hidden></div>
-    <div class="actions" id="spareActions" hidden>
-      <button class="big" id="spareBtn" type="button">✦ SPARE</button>
-    </div>
-    <div class="actions" id="endActions" hidden>
-      <button class="big" id="againBtn" type="button">Rejouer ↻</button>
+    <div class="choices" id="choiceActions" hidden></div>
+    <div class="row" id="endActions" hidden>
+      <button class="next" id="againBtn" type="button">REJOUER ▶</button>
     </div>
   </section>
 
-  <dialog id="parentDialog">
-    <h2>For grown-ups</h2>
-    <div class="stats" id="stats"></div>
-    <p style="font-size:15px;color:var(--muted);margin:0 0 8px">
-      Tick <b>“He was right”</b> when the game said wrong but he actually said it well. That tells us whether speech recognition is good enough.
-    </p>
-    <ul class="log" id="log"></ul>
-    <div class="row" style="margin-top:12px">
-      <button class="secondary" id="copyBtn" type="button">Copy results</button>
-      <button class="secondary" id="closeParent" type="button">Close</button>
-    </div>
-  </dialog>
+  <nav class="menu" id="menu" hidden>
+    <button type="button" id="fightBtn">⚔️ COMBAT</button>
+    <button type="button" id="speakBtn">🎤 PARLER</button>
+    <button type="button" id="repeatBtn">🔊 ÉCOUTER</button>
+    <button type="button" id="spareBtn">⭐ ÉPARGNER</button>
+  </nav>
 </main>
+
+<dialog id="parentDialog">
+  <h2>GROWN-UPS</h2>
+  <div class="pstats" id="stats"></div>
+  <p style="font-size:15px;color:#aaa;margin:0 0 8px">
+    Tick <b>“He was right”</b> when the game said wrong but he actually said it well. That tells us whether speech recognition is good enough.
+  </p>
+  <ul class="log" id="log"></ul>
+  <div class="row" style="margin-top:12px">
+    <button class="pbtn" id="copyBtn" type="button">COPY RESULTS</button>
+    <button class="pbtn" id="closeParent" type="button">CLOSE</button>
+  </div>
+</dialog>
 <script src="match.js"></script>
 <script src="game.js"></script>
 </body>
